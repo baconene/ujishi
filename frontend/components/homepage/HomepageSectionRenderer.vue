@@ -7,7 +7,7 @@ defineProps<{ section: HomepageSection }>()
 <template>
   <div>
     <template v-if="section.type === 'hero_carousel' && Array.isArray(section.data) && section.data.length">
-      <HomepageHeroCarousel :slides="section.data" />
+      <HeroCarousel :slides="section.data" />
     </template>
 
     <template v-else-if="section.type === 'featured_products' && Array.isArray(section.data)">
@@ -15,7 +15,7 @@ defineProps<{ section: HomepageSection }>()
         <h2 class="section-title">{{ (section.settings as any)?.title ?? 'Featured Products' }}</h2>
         <p class="section-subtitle">{{ (section.settings as any)?.subtitle }}</p>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          <ShopProductCard v-for="product in section.data" :key="product.id" :product="product" />
+          <ProductCard v-for="product in section.data" :key="product.id" :product="product" />
         </div>
         <div class="text-center mt-10">
           <NuxtLink to="/products?featured=true" class="btn-outline">View All Products</NuxtLink>
@@ -28,7 +28,7 @@ defineProps<{ section: HomepageSection }>()
         <div class="max-w-7xl mx-auto">
           <h2 class="section-title">{{ (section.settings as any)?.title ?? 'Best Sellers' }}</h2>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            <ShopProductCard v-for="product in section.data" :key="product.id" :product="product" />
+            <ProductCard v-for="product in section.data" :key="product.id" :product="product" />
           </div>
         </div>
       </section>
@@ -120,7 +120,7 @@ defineProps<{ section: HomepageSection }>()
     </template>
 
     <template v-else-if="section.type === 'newsletter'">
-      <HomepageNewsletterSection :settings="section.settings" />
+      <NewsletterSection :settings="section.settings" />
     </template>
   </div>
 </template>

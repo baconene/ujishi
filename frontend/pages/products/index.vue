@@ -117,7 +117,7 @@ watch([search, selectedCategory, sort], () => applyFilters())
 
           <template v-else-if="productsData?.data?.length">
             <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <ShopProductCard v-for="product in productsData.data" :key="product.id" :product="product" />
+              <ProductCard v-for="product in productsData.data" :key="product.id" :product="product" />
             </div>
             <UPagination
               :current-page="productsData.current_page"

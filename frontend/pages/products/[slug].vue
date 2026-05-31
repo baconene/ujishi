@@ -227,7 +227,7 @@ async function addToCart() {
       <div v-if="related.length">
         <h2 class="font-serif text-2xl font-semibold mb-6">You Might Also Like</h2>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <ShopProductCard v-for="p in related" :key="p.id" :product="p" />
+          <ProductCard v-for="p in related" :key="p.id" :product="p" />
         </div>
       </div>
     </div>
