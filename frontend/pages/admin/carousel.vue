@@ -20,6 +20,8 @@ const showForm = ref(false)
 const editingSlide = ref<Partial<CarouselSlide>>({})
 const saving = ref(false)
 const toast = ref('')
+const desktopFileInput = ref<HTMLInputElement | null>(null)
+const mobileFileInput = ref<HTMLInputElement | null>(null)
 
 function openNew() {
   editingSlide.value = { sort_order: (slides.value?.length ?? 0), is_active: true }
@@ -29,6 +31,50 @@ function openNew() {
 function openEdit(slide: CarouselSlide) {
   editingSlide.value = { ...slide }
   showForm.value = true
+}
+
+async function uploadMediaFile(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+
+  const media = await $api('/admin/media', {
+    method: 'POST',
+    body: form,
+  })
+
+  return media.url as string
+}
+
+async function handleDesktopFile(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) {
+    return
+  }
+
+  toast.value = 'Uploading desktop image...'
+  try {
+    editingSlide.value.desktop_image = await uploadMediaFile(file)
+    toast.value = 'Desktop image uploaded.'
+  } catch {
+    toast.value = 'Upload failed. Please try again.'
+  }
+}
+
+async function handleMobileFile(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) {
+    return
+  }
+
+  toast.value = 'Uploading mobile image...'
+  try {
+    editingSlide.value.mobile_image = await uploadMediaFile(file)
+    toast.value = 'Mobile image uploaded.'
+  } catch {
+    toast.value = 'Upload failed. Please try again.'
+  }
 }
 
 async function saveSlide() {
@@ -116,12 +162,44 @@ async function toggleSlide(slide: CarouselSlide) {
     <UModal :open="showForm" :title="editingSlide.id ? 'Edit Slide' : 'New Slide'" size="lg" @close="showForm = false">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Desktop Image URL</label>
-          <input v-model="editingSlide.desktop_image" type="text" class="input-field" placeholder="https://..." required />
+          <label class="block text-sm font-medium text-gray-600 mb-1">Desktop Image</label>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <button type="button" class="btn-outline" @click="desktopFileInput?.click()">Upload Desktop Image</button>
+              <span class="text-sm text-gray-500">JPEG/PNG/WebP up to 10MB</span>
+            </div>
+            <input ref="desktopFileInput" type="file" accept="image/*" class="hidden" @change="handleDesktopFile" />
+            <input v-model="editingSlide.desktop_image" type="text" class="input-field" placeholder="Or paste image URL" required />
+            <div v-if="editingSlide.desktop_image" class="mt-2 rounded-xl overflow-hidden border border-gray-200">
+              <NuxtImg
+                :src="editingSlide.desktop_image"
+                :alt="editingSlide.title || 'Desktop slide image'"
+                class="w-full h-48 object-cover"
+                width="400"
+                height="225"
+              />
+            </div>
+          </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Mobile Image URL (optional)</label>
-          <input v-model="editingSlide.mobile_image" type="text" class="input-field" placeholder="https://..." />
+          <label class="block text-sm font-medium text-gray-600 mb-1">Mobile Image</label>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <button type="button" class="btn-outline" @click="mobileFileInput?.click()">Upload Mobile Image</button>
+              <span class="text-sm text-gray-500">Optional mobile-specific image</span>
+            </div>
+            <input ref="mobileFileInput" type="file" accept="image/*" class="hidden" @change="handleMobileFile" />
+            <input v-model="editingSlide.mobile_image" type="text" class="input-field" placeholder="Or paste mobile image URL" />
+            <div v-if="editingSlide.mobile_image" class="mt-2 rounded-xl overflow-hidden border border-gray-200">
+              <NuxtImg
+                :src="editingSlide.mobile_image"
+                :alt="editingSlide.title || 'Mobile slide image'"
+                class="w-full h-48 object-cover"
+                width="400"
+                height="225"
+              />
+            </div>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">Title</label>

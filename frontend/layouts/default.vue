@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useCartStore } from '../stores/cart'
+import { useAuthStore } from '../stores/auth'
+
+const router = useRouter()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
-const { $api } = useNuxtApp()
 
 const mobileMenuOpen = ref(false)
 const searchOpen = ref(false)
@@ -16,7 +21,7 @@ const navLinks = [
 
 async function handleSearch() {
   if (searchQuery.value.trim()) {
-    await navigateTo(`/products?search=${encodeURIComponent(searchQuery.value)}`)
+    await router.push(`/products?search=${encodeURIComponent(searchQuery.value)}`)
     searchOpen.value = false
   }
 }
@@ -29,9 +34,9 @@ onMounted(() => {
 <template>
   <div class="min-h-screen flex flex-col bg-cream">
     <!-- Announcement Bar -->
-    <div class="bg-matcha-800 text-cream text-center text-xs py-2 px-4">
+    <!-- <div class="bg-matcha-800 text-cream text-center text-xs py-2 px-4">
       Free nationwide delivery on orders ₱1,500+ · Use code <strong>MATCHA10</strong> for 10% off your first order
-    </div>
+    </div> -->
 
     <!-- Header -->
     <header class="sticky top-0 z-50 bg-cream/95 backdrop-blur-sm border-b border-cream-dark">

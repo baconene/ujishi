@@ -18,6 +18,7 @@ onMounted(() => { settings.value = { ...(rawSettings.value ?? {}) } })
 
 const saving = ref(false)
 const toast = ref('')
+const logoInput = ref<HTMLInputElement | null>(null)
 
 async function save() {
   saving.value = true
@@ -31,6 +32,31 @@ async function save() {
     saving.value = false
   }
 }
+
+async function uploadLogo(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) {
+    return
+  }
+
+  toast.value = 'Uploading brand logo...'
+  try {
+    const form = new FormData()
+    form.append('file', file)
+
+    const media = await $api('/admin/media', {
+      method: 'POST', body: form,
+    })
+
+    settings.value.logo_url = media.url as string
+    toast.value = 'Brand logo uploaded.'
+  } catch {
+    toast.value = 'Upload failed. Please try again.'
+  }
+}
+
+const logoPreview = computed(() => settings.value.logo_url || '')
 
 const groups = [
   { title: 'General', keys: ['store_name', 'store_tagline', 'store_email', 'store_phone', 'store_address'] },
@@ -55,6 +81,29 @@ function labelFor(key: string) {
       <div v-if="toast" class="fixed top-20 right-6 z-50 bg-matcha-600 text-white px-5 py-3 rounded-xl shadow-lg">{{ toast }}</div>
     </Transition>
 
+    <div class="card p-6 space-y-4">
+      <h2 class="font-serif text-lg font-semibold">Brand</h2>
+      <div class="grid grid-cols-3 gap-4 items-start">
+        <label class="text-sm font-medium text-gray-600 col-span-1">Brand Logo</label>
+        <div class="col-span-2 space-y-3">
+          <div class="flex items-center gap-3">
+            <button type="button" class="btn-outline" @click="logoInput?.click()">Upload Logo</button>
+            <span class="text-sm text-gray-500">Upload an image or paste a URL below.</span>
+          </div>
+          <input ref="logoInput" type="file" accept="image/*" class="hidden" @change="uploadLogo" />
+          <input v-model="settings.logo_url" type="text" class="input-field" placeholder="Logo image URL" />
+          <div v-if="logoPreview" class="rounded-xl overflow-hidden border border-gray-200 w-48">
+            <NuxtImg
+              :src="logoPreview"
+              alt="Brand logo preview"
+              class="w-full h-24 object-contain bg-white"
+              width="192"
+              height="96"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-for="group in groups" :key="group.title" class="card p-6 space-y-4">
       <h2 class="font-serif text-lg font-semibold">{{ group.title }}</h2>
       <div
