@@ -25,11 +25,14 @@ class MediaService
 
         Storage::disk('public')->put($path, $image->toJpeg(85));
 
+        $baseUrl = rtrim(config('app.media_url') ?: config('app.url'), '/');
+        $url = "{$baseUrl}/storage/{$path}";
+
         return MediaFile::create([
             'filename' => $file->getClientOriginalName(),
             'disk' => 'public',
             'path' => $path,
-            'url' => Storage::disk('public')->url($path),
+            'url' => $url,
             'mime_type' => $file->getMimeType(),
             'size' => Storage::disk('public')->size($path),
             'width' => $image->width(),

@@ -53,6 +53,7 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+    'media_url' => env('MEDIA_URL', null),
 
     /*
     |--------------------------------------------------------------------------
