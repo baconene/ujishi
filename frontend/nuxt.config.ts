@@ -14,6 +14,16 @@ export default defineNuxtConfig({
     '@nuxt/image',
   ],
 
+  // Disable folder-name prefixing so <UButton> works (not <UiUButton>),
+  // <ShopProductCard> works (not <ShopShopProductCard>), etc.
+  components: [
+    { path: '~/components/ui', pathPrefix: false },
+    { path: '~/components/shop', pathPrefix: false },
+    { path: '~/components/homepage', pathPrefix: false },
+    { path: '~/components/admin', pathPrefix: false },
+    '~/components',
+  ],
+
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api',
