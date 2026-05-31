@@ -26,7 +26,7 @@ class AdminMediaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpeg,png,gif,webp|max:10240',
+            'file' => 'required|file|mimes:jpeg,png,gif,webp|max:51200',
         ]);
 
         $media = $this->mediaService->upload($request->file('file'));

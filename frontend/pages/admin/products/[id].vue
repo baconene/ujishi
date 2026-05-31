@@ -26,7 +26,103 @@ const form = ref<Partial<Product>>({
   seo_title: '', seo_description: '', seo_keywords: '', weight: undefined,
 })
 const contentBlocks = ref<ContentBlock[]>([])
-const productImages = ref<{ url: string; alt: string }[]>([])
+const productImages = ref<Array<{ url: string; alt: string; path?: string }>>([])
+const thumbnailInput = ref<HTMLInputElement | null>(null)
+const galleryFileInput = ref<HTMLInputElement | null>(null)
+const galleryUploadIndex = ref<number | null>(null)
+
+const maxUploadSizeText = '50MB'
+
+async function uploadMediaFile(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+
+  return await $api('/admin/media', {
+    method: 'POST',
+    headers: authHeaders.value,
+    body: form,
+  })
+}
+
+async function uploadThumbnail(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) {
+    return
+  }
+
+  toast.value = 'Uploading thumbnail...'
+  try {
+    const media = await uploadMediaFile(file)
+    form.value.thumbnail = media.url as string
+    toast.value = 'Thumbnail uploaded.'
+  } catch {
+    toast.value = 'Upload failed. Please try again.'
+  } finally {
+    if (thumbnailInput.value) {
+      thumbnailInput.value.value = ''
+    }
+    setTimeout(() => (toast.value = ''), 3000)
+  }
+}
+
+function triggerGalleryUpload(index?: number) {
+  if (index === undefined) {
+    productImages.value.push({ url: '', alt: form.value.name ?? '' })
+    galleryUploadIndex.value = productImages.value.length - 1
+  } else {
+    galleryUploadIndex.value = index
+  }
+  galleryFileInput.value?.click()
+}
+
+async function uploadGalleryImage(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  const index = galleryUploadIndex.value
+
+  if (index === null) {
+    return
+  }
+
+  if (!file) {
+    if (productImages.value[index]?.url === '') {
+      productImages.value.splice(index, 1)
+    }
+    galleryUploadIndex.value = null
+    return
+  }
+
+  toast.value = 'Uploading image...'
+  try {
+    const media = await uploadMediaFile(file)
+    const url = media.url as string
+    const path = media.path as string | undefined
+
+    if (index >= productImages.value.length) {
+      productImages.value.push({ url, alt: form.value.name ?? '', path })
+    } else {
+      productImages.value[index].url = url
+      productImages.value[index].path = path
+      if (!productImages.value[index].alt) {
+        productImages.value[index].alt = form.value.name ?? ''
+      }
+    }
+
+    toast.value = 'Image uploaded.'
+  } catch {
+    toast.value = 'Upload failed. Please try again.'
+    if (productImages.value[index]?.url === '') {
+      productImages.value.splice(index, 1)
+    }
+  } finally {
+    galleryUploadIndex.value = null
+    if (galleryFileInput.value) {
+      galleryFileInput.value.value = ''
+    }
+    setTimeout(() => (toast.value = ''), 3000)
+  }
+}
 
 if (!isNew.value) {
   const { data: productData } = await useFetch<Product>(`/admin/products/${route.params.id}`, {
@@ -304,6 +400,11 @@ function moveBlock(index: number, direction: 'up' | 'down') {
           <div v-if="form.thumbnail" class="aspect-square rounded-xl overflow-hidden bg-matcha-50">
             <NuxtImg :src="form.thumbnail" alt="Thumbnail" class="w-full h-full object-cover" width="300" height="300" />
           </div>
+          <div class="flex items-center gap-3">
+            <button type="button" class="btn-outline" @click="thumbnailInput?.click()">Upload Thumbnail</button>
+            <span class="text-sm text-gray-500">Max {{ maxUploadSizeText }}</span>
+          </div>
+          <input ref="thumbnailInput" type="file" accept="image/*" class="hidden" @change="uploadThumbnail" />
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">Image URL</label>
             <input v-model="form.thumbnail" type="text" class="input-field text-sm" placeholder="https://..." />
@@ -313,11 +414,18 @@ function moveBlock(index: number, direction: 'up' | 'down') {
         <!-- Gallery Images -->
         <div class="card p-5 space-y-3">
           <h2 class="font-serif text-lg font-semibold">Gallery</h2>
-          <div v-for="(img, i) in productImages" :key="i" class="flex gap-2">
+          <div class="flex items-center gap-3">
+            <button type="button" class="btn-outline" @click="triggerGalleryUpload()">Upload New Image</button>
+            <span class="text-sm text-gray-500">Max {{ maxUploadSizeText }}</span>
+          </div>
+          <input ref="galleryFileInput" type="file" accept="image/*" class="hidden" @change="uploadGalleryImage" />
+          <div v-for="(img, i) in productImages" :key="i" class="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
             <input v-model="img.url" type="text" class="input-field text-sm flex-1" placeholder="Image URL" />
-            <button class="text-red-400 hover:text-red-600 flex-shrink-0" @click="productImages.splice(i, 1)">✕</button>
+            <button type="button" class="btn-outline text-sm" @click="triggerGalleryUpload(i)">Upload</button>
+            <button type="button" class="text-red-400 hover:text-red-600 flex-shrink-0" @click="productImages.splice(i, 1)">✕</button>
           </div>
           <button
+            type="button"
             class="text-sm text-matcha-600 hover:underline"
             @click="productImages.push({ url: '', alt: form.name || '' })"
           >
