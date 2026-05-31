@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
 
   future: {
     compatibilityVersion: 4,
@@ -23,6 +23,11 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/admin/**': { ssr: false },
+  },
+
+  nitro: {
+    // Port for the Node.js server (Forge Daemon will run on this port)
+    port: process.env.NITRO_PORT ? Number(process.env.NITRO_PORT) : 3000,
   },
 
   app: {

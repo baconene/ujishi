@@ -1,11 +1,13 @@
 #!/bin/bash
-# Forge Zero Downtime Deployment Script
-# Paste this into Forge > Site > Deployment Script (replacing the entire default script)
+# =============================================================================
+# BACKEND Forge Deployment Script (api.ujishi.baconologies.com)
+# Paste into Forge > api.ujishi.baconologies.com > Deployment Script
 #
-# Required Forge site settings:
+# Forge site settings:
 #   Web Directory:       backend/public
 #   Linked Files:        backend/.env
 #   Linked Directories:  backend/storage
+# =============================================================================
 
 $CREATE_RELEASE()
 
