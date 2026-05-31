@@ -3,6 +3,7 @@ import type { Product } from '~/types/models'
 
 const props = defineProps<{ product: Product }>()
 const cartStore = useCartStore()
+const config = useRuntimeConfig()
 const adding = ref(false)
 
 const effectivePrice = computed(() => Number(props.product.sale_price || props.product.price))
@@ -11,7 +12,16 @@ const isOnSale = computed(() => !!props.product.sale_price && Number(props.produ
 const discountPct = computed(() =>
   isOnSale.value ? Math.round((1 - effectivePrice.value / originalPrice.value) * 100) : 0,
 )
-const thumbnail = computed(() => props.product.images?.[0]?.url || props.product.thumbnail)
+const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
+
+function normalizeUrl(url?: string) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return apiBase.value + url
+  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
+}
+
+const thumbnail = computed(() => normalizeUrl(props.product.images?.[0]?.url || props.product.thumbnail))
 
 async function addToCart() {
   adding.value = true
