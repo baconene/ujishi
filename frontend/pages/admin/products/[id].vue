@@ -14,6 +14,14 @@ const authHeaders = computed(() =>
 const isNew = computed(() => route.params.id === 'new')
 const toast = ref('')
 const saving = ref(false)
+const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
+
+function normalizeUrl(url?: string) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return apiBase.value + url
+  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
+}
 
 const { data: categories } = await useFetch<Category[]>('/admin/categories', {
   baseURL: config.public.apiBase, headers: authHeaders,
@@ -34,13 +42,13 @@ const galleryUploadIndex = ref<number | null>(null)
 const maxUploadSizeText = '50MB'
 
 async function uploadMediaFile(file: File) {
-  const form = new FormData()
-  form.append('file', file)
+  const fd = new FormData()
+  fd.append('file', file)
 
   return await $api('/admin/media', {
     method: 'POST',
     headers: authHeaders.value,
-    body: form,
+    body: fd,
   })
 }
 
@@ -199,6 +207,17 @@ function moveBlock(index: number, direction: 'up' | 'down') {
   contentBlocks.value[index] = contentBlocks.value[target]
   contentBlocks.value[target] = temp
 }
+
+const jsonErrors = ref<Record<number, string>>({})
+
+function updateBlockContent(index: number, value: string) {
+  try {
+    contentBlocks.value[index].content = JSON.parse(value)
+    delete jsonErrors.value[index]
+  } catch {
+    jsonErrors.value[index] = 'Invalid JSON'
+  }
+}
 </script>
 
 <template>
@@ -349,9 +368,11 @@ function moveBlock(index: number, direction: 'up' | 'down') {
                 <textarea
                   :value="JSON.stringify(block.content, null, 2)"
                   class="input-field text-xs font-mono"
+                  :class="{ 'border-red-400': jsonErrors[index] }"
                   rows="5"
-                  @input="block.content = JSON.parse(($event.target as HTMLTextAreaElement).value)"
+                  @input="updateBlockContent(index, ($event.target as HTMLTextAreaElement).value)"
                 />
+                <p v-if="jsonErrors[index]" class="text-xs text-red-500 mt-1">{{ jsonErrors[index] }}</p>
               </div>
             </div>
           </div>
@@ -398,7 +419,7 @@ function moveBlock(index: number, direction: 'up' | 'down') {
         <div class="card p-5 space-y-3">
           <h2 class="font-serif text-lg font-semibold">Thumbnail</h2>
           <div v-if="form.thumbnail" class="aspect-square rounded-xl overflow-hidden bg-matcha-50">
-            <NuxtImg :src="form.thumbnail" alt="Thumbnail" class="w-full h-full object-cover" width="300" height="300" />
+            <NuxtImg :src="normalizeUrl(form.thumbnail)" alt="Thumbnail" class="w-full h-full object-cover" width="300" height="300" />
           </div>
           <div class="flex items-center gap-3">
             <button type="button" class="btn-outline" @click="thumbnailInput?.click()">Upload Thumbnail</button>
@@ -419,10 +440,15 @@ function moveBlock(index: number, direction: 'up' | 'down') {
             <span class="text-sm text-gray-500">Max {{ maxUploadSizeText }}</span>
           </div>
           <input ref="galleryFileInput" type="file" accept="image/*" class="hidden" @change="uploadGalleryImage" />
-          <div v-for="(img, i) in productImages" :key="i" class="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
-            <input v-model="img.url" type="text" class="input-field text-sm flex-1" placeholder="Image URL" />
-            <button type="button" class="btn-outline text-sm" @click="triggerGalleryUpload(i)">Upload</button>
-            <button type="button" class="text-red-400 hover:text-red-600 flex-shrink-0" @click="productImages.splice(i, 1)">✕</button>
+          <div v-for="(img, i) in productImages" :key="i" class="space-y-1">
+            <div v-if="img.url" class="w-full aspect-video rounded-lg overflow-hidden bg-matcha-50">
+              <img :src="normalizeUrl(img.url)" :alt="img.alt" class="w-full h-full object-cover" />
+            </div>
+            <div class="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
+              <input v-model="img.url" type="text" class="input-field text-sm flex-1" placeholder="Image URL" />
+              <button type="button" class="btn-outline text-sm" @click="triggerGalleryUpload(i)">Upload</button>
+              <button type="button" class="text-red-400 hover:text-red-600 flex-shrink-0" @click="productImages.splice(i, 1)">✕</button>
+            </div>
           </div>
           <button
             type="button"
