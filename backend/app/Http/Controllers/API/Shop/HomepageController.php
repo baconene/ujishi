@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Page;
+use App\Models\Setting;
 use App\Services\HomepageService;
 use Illuminate\Http\JsonResponse;
 
@@ -27,5 +28,10 @@ class HomepageController extends Controller
     public function page(string $slug): JsonResponse
     {
         return response()->json(Page::active()->where('slug', $slug)->firstOrFail());
+    }
+
+    public function settings(): JsonResponse
+    {
+        return response()->json(Setting::all()->pluck('value', 'key'));
     }
 }

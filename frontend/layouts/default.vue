@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
@@ -7,6 +7,13 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
+const config = useRuntimeConfig()
+
+const { data: settings } = await useFetch<Record<string, string>>('/settings', {
+  baseURL: config.public.apiBase,
+})
+
+const logoUrl = computed(() => settings.value?.logo_url || '')
 
 const mobileMenuOpen = ref(false)
 const searchOpen = ref(false)
@@ -43,8 +50,21 @@ onMounted(() => {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 md:h-20">
           <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center gap-2 group">
-            <div class="w-10 h-10 rounded-full bg-matcha-600 flex items-center justify-center text-white font-serif font-bold text-lg">宇</div>
+          <NuxtLink to="/" class="flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-full bg-matcha-600 flex items-center justify-center overflow-hidden">
+              <template v-if="logoUrl">
+                <NuxtImg
+                  :src="logoUrl"
+                  alt="Uji-Shi logo"
+                  class="w-full h-full object-contain bg-white"
+                  width="40"
+                  height="40"
+                />
+              </template>
+              <template v-else>
+                <span class="text-white font-serif font-bold text-lg">宇</span>
+              </template>
+            </div>
             <span class="font-serif text-xl font-semibold text-charcoal group-hover:text-matcha-600 transition-colors">
               Uji-Shi
             </span>

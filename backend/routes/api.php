@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 // --- Public ---
 Route::get('/homepage', [HomepageController::class, 'index']);
 Route::get('/categories', [HomepageController::class, 'categories']);
+Route::get('/settings', [HomepageController::class, 'settings']);
 Route::get('/pages/{slug}', [HomepageController::class, 'page']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
