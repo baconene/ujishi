@@ -159,7 +159,7 @@ async function toggleSlide(slide: CarouselSlide) {
     </div>
 
     <!-- Slide Form Modal -->
-    <UModal :open="showForm" :title="editingSlide.id ? 'Edit Slide' : 'New Slide'" size="lg" @close="showForm = false">
+    <UModal :open="showForm" :title="editingSlide.id ? 'Edit Slide' : 'New Slide'" size="full" @close="showForm = false">
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">Desktop Image</label>
