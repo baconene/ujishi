@@ -62,6 +62,18 @@ export interface Product {
   created_at: string
 }
 
+export interface Page {
+  id: number
+  title: string
+  slug: string
+  content: string
+  seo_title?: string | null
+  seo_description?: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface Review {
   id: number
   user_id: number
