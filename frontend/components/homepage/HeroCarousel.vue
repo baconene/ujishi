@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CarouselSlide } from '~/types/models'
 
-defineProps<{ slides: CarouselSlide[] }>()
+const props = defineProps<{ slides: CarouselSlide[] }>()
 
 const currentSlide = ref(0)
 let autoplayInterval: ReturnType<typeof setInterval>
@@ -13,8 +13,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => clearInterval(autoplayInterval))
-
-const props = defineProps<{ slides: CarouselSlide[] }>()
 </script>
 
 <template>
