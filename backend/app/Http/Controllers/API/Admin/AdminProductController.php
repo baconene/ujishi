@@ -14,7 +14,7 @@ class AdminProductController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with('category')->orderByDesc('created_at');
+        $query = Product::with('category', 'images')->orderByDesc('created_at');
 
         if ($search = $request->get('search')) {
             $query->where(fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%"));

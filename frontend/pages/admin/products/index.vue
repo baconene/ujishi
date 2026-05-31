@@ -13,6 +13,14 @@ const { $api } = useNuxtApp()
 
 const search = ref('')
 const page = ref(1)
+const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
+
+function normalizeUrl(url?: string) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return apiBase.value + url
+  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
+}
 const query = computed(() => ({ search: search.value || undefined, page: page.value }))
 
 const { data, pending, refresh } = await useFetch<PaginatedResponse<Product>>('/admin/products', {
@@ -68,7 +76,7 @@ function statusBadge(product: Product) {
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <NuxtImg
-                    :src="product.thumbnail || 'https://placehold.co/40x40/e5f2db/5a9e3c?text=P'"
+                    :src="normalizeUrl(product.images?.[0]?.url || product.thumbnail) || 'https://placehold.co/40x40/e5f2db/5a9e3c?text=P'"
                     :alt="product.name"
                     class="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                     width="40"

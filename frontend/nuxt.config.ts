@@ -1,4 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const _apiBase = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api'
+let _apiImageDomain = 'localhost:8000'
+try {
+  const _u = new URL(_apiBase)
+  _apiImageDomain = _u.port ? `${_u.hostname}:${_u.port}` : _u.hostname
+} catch {}
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: false },
@@ -65,6 +72,7 @@ export default defineNuxtConfig({
   image: {
     quality: 85,
     format: ['webp', 'jpeg'],
+    domains: [_apiImageDomain],
     screens: {
       xs: 320,
       sm: 640,
