@@ -4,10 +4,13 @@
 # Paste into Forge > www.ujishi.baconologies.com > Deployment Script
 #
 # Forge site settings:
-#   Type:            Node.js (no PHP)
-#   Web Directory:   frontend/public   (Nginx fallback; Nitro handles routing)
-#   Start Command:   node .output/server/index.mjs
 #   Linked Files:    frontend/.env
+#
+# AFTER FIRST SUCCESSFUL DEPLOY, create the Forge Daemon at:
+#   Forge > Server > Daemons > New Daemon
+#   Command:   node /home/forge/www.ujishi.baconologies.com/current/frontend/.output/server/index.mjs
+#   Directory: /home/forge/www.ujishi.baconologies.com/current/frontend/.output/server
+#   User:      forge
 # =============================================================================
 
 $CREATE_RELEASE()
@@ -20,5 +23,5 @@ npm run build
 
 $ACTIVATE_RELEASE()
 
-# Restart the Nuxt Node.js daemon (Forge Daemon name: nuxt-frontend)
-sudo supervisorctl restart "nuxt-frontend:*"
+# Restart all supervisor-managed daemons (|| true = non-fatal on first deploy before daemon exists)
+sudo supervisorctl restart all 2>/dev/null || true

@@ -12,6 +12,7 @@
   "dependencies": {
     "@nuxt/image": "^1.9.0",
     "@nuxt/kit": "^4.4.6",
+    "sharp": "^0.33.5",
     "@pinia/nuxt": "^0.11.0",
     "@tiptap/extension-link": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
