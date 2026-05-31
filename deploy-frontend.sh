@@ -1,16 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # FRONTEND Forge Deployment Script (www.ujishi.baconologies.com)
-# Paste into Forge > www.ujishi.baconologies.com > Deployment Script
-#
-# Forge site settings:
-#   Linked Files:    frontend/.env
-#
-# AFTER FIRST SUCCESSFUL DEPLOY, create the Forge Daemon at:
-#   Forge > Server > Daemons > New Daemon
-#   Command:   node /home/forge/www.ujishi.baconologies.com/current/frontend/.output/server/index.mjs
-#   Directory: /home/forge/www.ujishi.baconologies.com/current/frontend/.output/server
-#   User:      forge
+# Uses PM2 to manage the Nuxt Node.js process (no Forge Daemons needed)
 # =============================================================================
 
 $CREATE_RELEASE()
@@ -23,5 +14,15 @@ npm run build
 
 $ACTIVATE_RELEASE()
 
-# Restart all supervisor-managed daemons (|| true = non-fatal on first deploy before daemon exists)
-sudo supervisorctl restart all 2>/dev/null || true
+# Install PM2 globally if not present
+if ! command -v pm2 &> /dev/null; then
+    sudo npm install -g pm2
+fi
+
+# Reload existing process OR start fresh if first deploy
+pm2 reload nuxt-frontend --update-env 2>/dev/null || \
+pm2 start /home/forge/www.ujishi.baconologies.com/current/frontend/.output/server/index.mjs \
+    --name nuxt-frontend \
+    --env production
+
+pm2 save
