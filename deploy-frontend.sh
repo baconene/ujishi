@@ -17,7 +17,7 @@ $CREATE_RELEASE()
 
 cd $FORGE_RELEASE_DIRECTORY/frontend
 
-npm ci --prefer-offline
+npm install
 
 npm run build
 
