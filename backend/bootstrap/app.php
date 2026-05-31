@@ -15,11 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['admin' => AdminMiddleware::class]);
+        // Token-based Sanctum auth — CORS only, no stateful/CSRF middleware
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
-        ]);
-        $middleware->api(append: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
