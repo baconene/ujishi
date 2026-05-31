@@ -1,31 +1,22 @@
 #!/bin/bash
-# Forge deployment script — paste this into Forge > Site > Deployment Script
-# Forge runs this script from the release directory automatically.
-# Web Directory in Forge must be set to: backend/public
-# Linked Files in Forge must include: backend/.env
-# Linked Directories in Forge must include: backend/storage
+# Forge Zero Downtime Deployment Script
+# Paste this into Forge > Site > Deployment Script (replacing the entire default script)
+#
+# Required Forge site settings:
+#   Web Directory:       backend/public
+#   Linked Files:        backend/.env
+#   Linked Directories:  backend/storage
 
-set -e
+$CREATE_RELEASE()
 
-# Use relative path — Forge runs the script from the repo root of the release
-cd backend
+cd $FORGE_RELEASE_DIRECTORY/backend
 
-echo "==> Installing PHP dependencies..."
-$FORGE_COMPOSER install --no-interaction --prefer-dist --optimize-autoloader
+$FORGE_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-echo "==> Running migrations..."
 $FORGE_PHP artisan migrate --force
-
-echo "==> Caching config, routes, views..."
-$FORGE_PHP artisan config:cache
-$FORGE_PHP artisan route:cache
-$FORGE_PHP artisan view:cache
-
-echo "==> Linking storage..."
+$FORGE_PHP artisan optimize
 $FORGE_PHP artisan storage:link
 
-echo "==> Restarting PHP-FPM..."
-( flock -w 10 9 || exit 1
-    echo 'Restarting FPM...'; sudo -S service "$FORGE_PHP_FPM" restart ) 9>/tmp/fpmlock
+$ACTIVATE_RELEASE()
 
-echo "==> Backend deployment complete."
+$RESTART_QUEUES()
