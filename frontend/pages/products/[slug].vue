@@ -4,6 +4,14 @@ import type { Product } from '~/types/models'
 const route = useRoute()
 const cartStore = useCartStore()
 const config = useRuntimeConfig()
+const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
+
+function normalizeUrl(url?: string | null) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return apiBase.value + url
+  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
+}
 
 const { data, error } = await useFetch<{ product: Product; related: Product[] }>(
   `/products/${route.params.slug}`,
@@ -22,7 +30,7 @@ const adding = ref(false)
 const activeTab = ref<'description' | 'reviews'>('description')
 
 const allImages = computed(() => {
-  const imgs = product.value?.images ?? []
+  const imgs = (product.value?.images ?? []).filter(img => img.url)
   return imgs.length ? imgs : [{ url: product.value?.thumbnail, alt: product.value?.name }]
 })
 
@@ -67,7 +75,7 @@ async function addToCart() {
         <div class="space-y-4">
           <div class="aspect-square rounded-2xl overflow-hidden bg-matcha-50">
             <NuxtImg
-              :src="allImages[selectedImageIndex]?.url || ''"
+              :src="normalizeUrl(allImages[selectedImageIndex]?.url) || 'https://placehold.co/800x800/e5f2db/5a9e3c?text=No+Image'"
               :alt="allImages[selectedImageIndex]?.alt || product.name"
               class="w-full h-full object-cover"
               width="800"
@@ -81,7 +89,7 @@ async function addToCart() {
               :class="['rounded-lg overflow-hidden aspect-square border-2 transition-all', selectedImageIndex === i ? 'border-matcha-500' : 'border-transparent']"
               @click="selectedImageIndex = i"
             >
-              <NuxtImg :src="img.url || ''" :alt="img.alt || ''" class="w-full h-full object-cover" width="120" height="120" />
+              <NuxtImg :src="normalizeUrl(img.url)" :alt="img.alt || ''" class="w-full h-full object-cover" width="120" height="120" />
             </button>
           </div>
         </div>
