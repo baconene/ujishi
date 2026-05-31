@@ -36,15 +36,17 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+// --- Cart & Wishlist (guest + auth, optional Sanctum token) ---
+// These work without a token (guest) and also when authenticated.
+// Controllers call $request->user('sanctum') which returns null for guests.
+Route::get('/cart', [CartController::class, 'index']);
+Route::post('/cart', [CartController::class, 'store']);
+Route::put('/cart/{item}', [CartController::class, 'update']);
+Route::delete('/cart/{item}', [CartController::class, 'destroy']);
+Route::post('/cart/coupon', [CartController::class, 'applyCoupon']);
+
 // --- Customer (authenticated) ---
 Route::middleware('auth:sanctum')->group(function () {
-    // Cart
-    Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart', [CartController::class, 'store']);
-    Route::put('/cart/{item}', [CartController::class, 'update']);
-    Route::delete('/cart/{item}', [CartController::class, 'destroy']);
-    Route::post('/cart/coupon', [CartController::class, 'applyCoupon']);
-
     // Wishlist
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist/toggle', [WishlistController::class, 'toggle']);

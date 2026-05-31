@@ -14,7 +14,7 @@ class CartController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $items = $this->cart->getItems($this->sessionId($request), $request->user());
+        $items = $this->cart->getItems($this->sessionId($request), $request->user('sanctum'));
         $totals = $this->cart->getTotal($items);
 
         return response()->json(['items' => $items, ...$totals]);
@@ -29,7 +29,7 @@ class CartController extends Controller
 
         $item = $this->cart->addItem(
             $this->sessionId($request),
-            $request->user(),
+            $request->user('sanctum'),
             $request->product_id,
             $request->get('quantity', 1)
         );
@@ -41,14 +41,14 @@ class CartController extends Controller
     {
         $request->validate(['quantity' => 'required|integer|min:1|max:99']);
 
-        $item = $this->cart->updateItem($this->sessionId($request), $request->user(), $itemId, $request->quantity);
+        $item = $this->cart->updateItem($this->sessionId($request), $request->user('sanctum'), $itemId, $request->quantity);
 
         return response()->json($item);
     }
 
     public function destroy(Request $request, int $itemId): JsonResponse
     {
-        $this->cart->removeItem($this->sessionId($request), $request->user(), $itemId);
+        $this->cart->removeItem($this->sessionId($request), $request->user('sanctum'), $itemId);
 
         return response()->json(['message' => 'Item removed.']);
     }
@@ -63,7 +63,7 @@ class CartController extends Controller
             return response()->json(['message' => 'Invalid or expired coupon.'], 422);
         }
 
-        $items = $this->cart->getItems($this->sessionId($request), $request->user());
+        $items = $this->cart->getItems($this->sessionId($request), $request->user('sanctum'));
         $totals = $this->cart->getTotal($items);
 
         if ($totals['subtotal'] < $coupon->min_order_amount) {
