@@ -3,6 +3,7 @@ import type { Product } from '~/types/models'
 
 const route = useRoute()
 const cartStore = useCartStore()
+const config = useRuntimeConfig()
 const { normalizeUrl } = useImageUrl()
 
 const { data, error } = await useFetch<{ product: Product; related: Product[] }>(
