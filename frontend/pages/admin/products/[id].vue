@@ -14,14 +14,7 @@ const authHeaders = computed(() =>
 const isNew = computed(() => route.params.id === 'new')
 const toast = ref('')
 const saving = ref(false)
-const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
-
-function normalizeUrl(url?: string) {
-  if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  if (url.startsWith('/')) return apiBase.value + url
-  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
-}
+const { normalizeUrl } = useImageUrl()
 
 const { data: categories } = await useFetch<Category[]>('/admin/categories', {
   baseURL: config.public.apiBase, headers: authHeaders,

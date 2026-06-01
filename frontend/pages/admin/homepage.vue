@@ -29,14 +29,7 @@ type LocalSlide = CarouselSlide & { _isNew?: boolean }
 const carouselSlides = ref<LocalSlide[]>([])
 const slideFileInput = ref<HTMLInputElement | null>(null)
 const pendingSlideUpload = ref<{ slide: LocalSlide; field: 'desktop_image' | 'mobile_image' } | null>(null)
-const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
-
-function normalizeUrl(url?: string | null) {
-  if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  if (url.startsWith('/')) return apiBase.value + url
-  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
-}
+const { normalizeUrl } = useImageUrl()
 
 async function loadSlides() {
   const data = await $api('/admin/carousel', { headers: authHeaders.value }) as CarouselSlide[]

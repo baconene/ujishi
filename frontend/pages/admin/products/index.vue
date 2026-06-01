@@ -13,14 +13,7 @@ const { $api } = useNuxtApp()
 
 const search = ref('')
 const page = ref(1)
-const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
-
-function normalizeUrl(url?: string) {
-  if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  if (url.startsWith('/')) return apiBase.value + url
-  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
-}
+const { normalizeUrl } = useImageUrl()
 const query = computed(() => ({ search: search.value || undefined, page: page.value }))
 
 const { data, pending, refresh } = await useFetch<PaginatedResponse<Product>>('/admin/products', {

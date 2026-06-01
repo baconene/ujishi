@@ -10,14 +10,7 @@ const authCookie = useCookie<string | null>('auth_token')
 const authHeaders = computed(() =>
   authCookie.value ? { Authorization: `Bearer ${authCookie.value}` } : {},
 )
-const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
-
-function normalizeUrl(url?: string | null) {
-  if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  if (url.startsWith('/')) return apiBase.value + url
-  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
-}
+const { normalizeUrl } = useImageUrl()
 
 const { data: slides, refresh } = await useFetch<CarouselSlide[]>('/admin/carousel', {
   baseURL: config.public.apiBase,

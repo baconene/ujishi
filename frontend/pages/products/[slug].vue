@@ -3,15 +3,7 @@ import type { Product } from '~/types/models'
 
 const route = useRoute()
 const cartStore = useCartStore()
-const config = useRuntimeConfig()
-const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
-
-function normalizeUrl(url?: string | null) {
-  if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  if (url.startsWith('/')) return apiBase.value + url
-  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
-}
+const { normalizeUrl } = useImageUrl()
 
 const { data, error } = await useFetch<{ product: Product; related: Product[] }>(
   `/products/${route.params.slug}`,
