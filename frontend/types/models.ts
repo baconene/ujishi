@@ -180,6 +180,21 @@ export interface Coupon {
   is_active: boolean
 }
 
+export interface MediaFile {
+  id: number
+  filename: string
+  disk: string
+  path: string
+  url: string
+  mime_type: string
+  size: number
+  alt?: string
+  width?: number
+  height?: number
+  created_at: string
+  updated_at: string
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   current_page: number
