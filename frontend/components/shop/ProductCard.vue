@@ -56,34 +56,35 @@ async function addToCart() {
     </NuxtLink>
 
     <!-- Info -->
-    <div class="p-4 flex flex-col flex-1 gap-2">
+    <div class="p-3 sm:p-4 flex flex-col flex-1 gap-1.5 sm:gap-2">
       <NuxtLink :to="`/products/${product.slug}`">
         <p class="text-xs text-matcha-600 font-medium">{{ product.category?.name }}</p>
-        <h3 class="font-serif text-base font-semibold text-charcoal group-hover:text-matcha-600 transition-colors line-clamp-2 mt-0.5">
+        <h3 class="font-serif text-sm sm:text-base font-semibold text-charcoal group-hover:text-matcha-600 transition-colors line-clamp-2 mt-0.5">
           {{ product.name }}
         </h3>
       </NuxtLink>
 
-      <div class="flex items-center gap-1">
+      <div class="hidden sm:flex items-center gap-1">
         <URating :value="product.average_rating ?? 0" size="sm" readonly />
         <span class="text-xs text-gray-400">({{ product.average_rating?.toFixed(1) ?? '0.0' }})</span>
       </div>
 
-      <div class="flex items-center justify-between mt-auto pt-2">
+      <div class="flex flex-col gap-2 mt-auto pt-1 sm:pt-2">
         <div>
-          <span class="font-semibold text-charcoal text-lg">₱{{ effectivePrice.toLocaleString() }}</span>
-          <span v-if="isOnSale" class="text-sm text-gray-400 line-through ml-2">₱{{ originalPrice.toLocaleString() }}</span>
+          <span class="font-semibold text-charcoal text-base sm:text-lg">₱{{ effectivePrice.toLocaleString() }}</span>
+          <span v-if="isOnSale" class="text-xs sm:text-sm text-gray-400 line-through ml-1 sm:ml-2">₱{{ originalPrice.toLocaleString() }}</span>
         </div>
         <UButton
           size="sm"
+          full
           :loading="adding"
           :disabled="product.stock === 0"
           @click.prevent="addToCart"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add
+          Add to Cart
         </UButton>
       </div>
     </div>

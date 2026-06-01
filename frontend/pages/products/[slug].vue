@@ -109,8 +109,8 @@ async function addToCart() {
 
           <!-- Price -->
           <div class="flex items-center gap-4">
-            <span class="font-serif text-4xl font-bold text-charcoal">₱{{ effectivePrice.toLocaleString() }}</span>
-            <span v-if="isOnSale" class="text-xl text-gray-400 line-through">₱{{ Number(product.price).toLocaleString() }}</span>
+            <span class="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-charcoal">₱{{ effectivePrice.toLocaleString() }}</span>
+            <span v-if="isOnSale" class="text-base sm:text-xl text-gray-400 line-through">₱{{ Number(product.price).toLocaleString() }}</span>
             <span v-if="isOnSale" class="badge-sale text-sm">
               Save ₱{{ (Number(product.price) - effectivePrice).toLocaleString() }}
             </span>

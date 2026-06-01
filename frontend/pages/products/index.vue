@@ -111,12 +111,12 @@ watch([search, selectedCategory, sort], () => applyFilters())
             </select>
           </div>
 
-          <div v-if="pending" class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-if="pending" class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             <div v-for="i in 12" :key="i" class="card aspect-square animate-pulse bg-matcha-50" />
           </div>
 
           <template v-else-if="productsData?.data?.length">
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               <ProductCard v-for="product in productsData.data" :key="product.id" :product="product" />
             </div>
             <UPagination
