@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { HomepageSection } from '~/types/models'
+import type { CarouselSlide, HomepageSection } from '~/types/models'
 
 definePageMeta({ layout: 'admin', title: 'Homepage Builder', middleware: 'admin' })
 useSeoMeta({ title: 'Homepage Builder' })
@@ -24,6 +24,109 @@ const sectionSettings = ref<Record<string, unknown>>({})
 const showEditor = ref(false)
 const toast = ref('')
 
+// Carousel state
+type LocalSlide = CarouselSlide & { _isNew?: boolean }
+const carouselSlides = ref<LocalSlide[]>([])
+const slideFileInput = ref<HTMLInputElement | null>(null)
+const pendingSlideUpload = ref<{ slide: LocalSlide; field: 'desktop_image' | 'mobile_image' } | null>(null)
+const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
+
+function normalizeUrl(url?: string | null) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return apiBase.value + url
+  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
+}
+
+async function loadSlides() {
+  const data = await $api('/admin/carousel', { headers: authHeaders.value }) as CarouselSlide[]
+  carouselSlides.value = data
+}
+
+function addSlide() {
+  carouselSlides.value.push({
+    id: 0,
+    desktop_image: '',
+    mobile_image: '',
+    title: '',
+    subtitle: '',
+    cta_text: '',
+    cta_url: '',
+    sort_order: carouselSlides.value.length,
+    is_active: true,
+    _isNew: true,
+  })
+}
+
+async function saveSlide(slide: LocalSlide) {
+  if (!slide.desktop_image) {
+    toast.value = 'Desktop image is required.'
+    setTimeout(() => (toast.value = ''), 3000)
+    return
+  }
+  saving.value = true
+  try {
+    const body = {
+      desktop_image: slide.desktop_image,
+      mobile_image: slide.mobile_image || null,
+      title: slide.title || null,
+      subtitle: slide.subtitle || null,
+      cta_text: slide.cta_text || null,
+      cta_url: slide.cta_url || null,
+      sort_order: slide.sort_order,
+      is_active: slide.is_active,
+    }
+    if (slide._isNew) {
+      const created = await $api('/admin/carousel', { method: 'POST', headers: authHeaders.value, body }) as CarouselSlide
+      slide.id = created.id
+      delete slide._isNew
+    } else {
+      await $api(`/admin/carousel/${slide.id}`, { method: 'PUT', headers: authHeaders.value, body })
+    }
+    toast.value = 'Slide saved!'
+  } catch {
+    toast.value = 'Failed to save slide.'
+  } finally {
+    saving.value = false
+    setTimeout(() => (toast.value = ''), 3000)
+  }
+}
+
+async function deleteSlide(slide: LocalSlide, index: number) {
+  if (!confirm('Delete this slide?')) return
+  if (!slide._isNew) {
+    await $api(`/admin/carousel/${slide.id}`, { method: 'DELETE', headers: authHeaders.value })
+  }
+  carouselSlides.value.splice(index, 1)
+  toast.value = 'Slide deleted.'
+  setTimeout(() => (toast.value = ''), 3000)
+}
+
+function triggerSlideUpload(slide: LocalSlide, field: 'desktop_image' | 'mobile_image') {
+  pendingSlideUpload.value = { slide, field }
+  slideFileInput.value?.click()
+}
+
+async function handleSlideImageUpload(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  const pending = pendingSlideUpload.value
+  if (!file || !pending) return
+  toast.value = 'Uploading...'
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const media = await $api('/admin/media', { method: 'POST', headers: authHeaders.value, body: fd }) as { url: string }
+    pending.slide[pending.field] = media.url
+    toast.value = 'Image uploaded!'
+  } catch {
+    toast.value = 'Upload failed.'
+  } finally {
+    pendingSlideUpload.value = null
+    if (slideFileInput.value) slideFileInput.value.value = ''
+    setTimeout(() => (toast.value = ''), 3000)
+  }
+}
+
 const sectionTypeLabels: Record<string, string> = {
   hero_carousel: '🎠 Hero Carousel',
   featured_products: '⭐ Featured Products',
@@ -44,10 +147,13 @@ async function toggleSection(section: HomepageSection) {
   await refresh()
 }
 
-function editSection(section: HomepageSection) {
+async function editSection(section: HomepageSection) {
   editingSection.value = section
   sectionSettings.value = { ...(section.settings ?? {}) }
   showEditor.value = true
+  if (section.type === 'hero_carousel') {
+    await loadSlides()
+  }
 }
 
 async function saveSection() {
@@ -85,7 +191,6 @@ async function saveOrder() {
   }
 }
 
-// Drag & drop helpers
 function onDragStart(section: HomepageSection) {
   dragging.value = section
 }
@@ -142,20 +247,17 @@ function onDragEnd() {
         @dragover="onDragOver($event, section)"
         @dragend="onDragEnd"
       >
-        <!-- Drag Handle -->
         <div class="text-gray-300 flex flex-col gap-0.5">
           <div class="w-5 h-0.5 bg-current rounded" />
           <div class="w-5 h-0.5 bg-current rounded" />
           <div class="w-5 h-0.5 bg-current rounded" />
         </div>
 
-        <!-- Label -->
         <div class="flex-1">
           <p class="font-medium text-charcoal">{{ sectionTypeLabels[section.type] ?? section.type }}</p>
           <p class="text-sm text-gray-400">{{ section.name }}</p>
         </div>
 
-        <!-- Active Toggle -->
         <button
           :class="[
             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
@@ -171,21 +273,103 @@ function onDragEnd() {
           />
         </button>
 
-        <!-- Edit Button -->
-        <button
-          class="btn-ghost text-sm px-3 py-2"
-          @click="editSection(section)"
-        >
+        <button class="btn-ghost text-sm px-3 py-2" @click="editSection(section)">
           Edit
         </button>
       </div>
     </div>
 
+    <!-- Hidden file input for slide image upload -->
+    <input ref="slideFileInput" type="file" accept="image/*" class="hidden" @change="handleSlideImageUpload" />
+
     <!-- Section Editor Modal -->
     <UModal :open="showEditor" :title="`Edit: ${sectionTypeLabels[editingSection?.type ?? '']}`" size="lg" @close="showEditor = false">
       <div v-if="editingSection" class="space-y-4">
+
+        <!-- Hero Carousel Editor -->
+        <template v-if="editingSection.type === 'hero_carousel'">
+          <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            <div
+              v-for="(slide, index) in carouselSlides"
+              :key="slide.id || index"
+              class="border border-gray-200 rounded-xl p-4 space-y-3"
+            >
+              <!-- Image Preview -->
+              <div class="aspect-video rounded-lg overflow-hidden bg-matcha-50">
+                <img
+                  v-if="slide.desktop_image"
+                  :src="normalizeUrl(slide.desktop_image)"
+                  :alt="slide.title || 'Slide'"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                  No image — upload one below
+                </div>
+              </div>
+
+              <!-- Image Uploads -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Desktop Image *</label>
+                  <div class="flex gap-2">
+                    <input v-model="slide.desktop_image" type="text" class="input-field text-xs flex-1" placeholder="https://..." />
+                    <button type="button" class="btn-outline text-xs px-2 flex-shrink-0" @click="triggerSlideUpload(slide, 'desktop_image')">Upload</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Mobile Image <span class="text-gray-400">(optional)</span></label>
+                  <div class="flex gap-2">
+                    <input v-model="slide.mobile_image" type="text" class="input-field text-xs flex-1" placeholder="https://..." />
+                    <button type="button" class="btn-outline text-xs px-2 flex-shrink-0" @click="triggerSlideUpload(slide, 'mobile_image')">Upload</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Text Fields -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                  <input v-model="slide.title" type="text" class="input-field text-sm" placeholder="Slide headline" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Subtitle</label>
+                  <input v-model="slide.subtitle" type="text" class="input-field text-sm" placeholder="Supporting text" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">CTA Button Text</label>
+                  <input v-model="slide.cta_text" type="text" class="input-field text-sm" placeholder="Shop Now" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">CTA URL</label>
+                  <input v-model="slide.cta_url" type="text" class="input-field text-sm" placeholder="/products" />
+                </div>
+              </div>
+
+              <!-- Slide Actions -->
+              <div class="flex items-center justify-between pt-1 border-t border-gray-100">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input v-model="slide.is_active" type="checkbox" class="w-4 h-4 text-matcha-500" />
+                  <span class="text-sm text-gray-600">Active</span>
+                </label>
+                <div class="flex gap-2">
+                  <UButton size="sm" :loading="saving" @click="saveSlide(slide)">Save Slide</UButton>
+                  <button type="button" class="text-red-400 hover:text-red-600 text-sm px-2" @click="deleteSlide(slide, index)">Delete</button>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn-outline w-full" @click="addSlide">
+              + Add Slide
+            </button>
+          </div>
+
+          <div class="flex justify-end pt-2 border-t">
+            <UButton variant="ghost" @click="showEditor = false">Close</UButton>
+          </div>
+        </template>
+
         <!-- About Section Editor -->
-        <template v-if="editingSection.type === 'about'">
+        <template v-else-if="editingSection.type === 'about'">
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">Title</label>
             <input v-model="(sectionSettings as any).title" type="text" class="input-field" />
@@ -208,6 +392,10 @@ function onDragEnd() {
               <input v-model="(sectionSettings as any).cta_url" type="text" class="input-field" />
             </div>
           </div>
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <UButton variant="ghost" @click="showEditor = false">Cancel</UButton>
+            <UButton :loading="saving" @click="saveSection">Save Changes</UButton>
+          </div>
         </template>
 
         <!-- Newsletter Editor -->
@@ -219,6 +407,10 @@ function onDragEnd() {
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">Subtitle</label>
             <input v-model="(sectionSettings as any).subtitle" type="text" class="input-field" />
+          </div>
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <UButton variant="ghost" @click="showEditor = false">Cancel</UButton>
+            <UButton :loading="saving" @click="saveSection">Save Changes</UButton>
           </div>
         </template>
 
@@ -232,12 +424,12 @@ function onDragEnd() {
             <label class="block text-sm font-medium text-gray-600 mb-1">Subtitle</label>
             <input v-model="(sectionSettings as any).subtitle" type="text" class="input-field" />
           </div>
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <UButton variant="ghost" @click="showEditor = false">Cancel</UButton>
+            <UButton :loading="saving" @click="saveSection">Save Changes</UButton>
+          </div>
         </template>
 
-        <div class="flex justify-end gap-3 pt-4">
-          <UButton variant="ghost" @click="showEditor = false">Cancel</UButton>
-          <UButton :loading="saving" @click="saveSection">Save Changes</UButton>
-        </div>
       </div>
     </UModal>
   </div>
