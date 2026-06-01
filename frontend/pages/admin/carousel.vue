@@ -10,6 +10,14 @@ const authCookie = useCookie<string | null>('auth_token')
 const authHeaders = computed(() =>
   authCookie.value ? { Authorization: `Bearer ${authCookie.value}` } : {},
 )
+const apiBase = computed(() => (config.public.apiBase || '').replace(/\/api\/?$/, ''))
+
+function normalizeUrl(url?: string | null) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return apiBase.value + url
+  return apiBase.value + (url.startsWith('storage') ? '/' : '/storage/') + url.replace(/^\/+/, '')
+}
 
 const { data: slides, refresh } = await useFetch<CarouselSlide[]>('/admin/carousel', {
   baseURL: config.public.apiBase,
@@ -127,7 +135,7 @@ async function toggleSlide(slide: CarouselSlide) {
       <div v-for="slide in slides" :key="slide.id" class="card overflow-hidden">
         <div class="aspect-video relative">
           <NuxtImg
-            :src="slide.desktop_image"
+            :src="normalizeUrl(slide.desktop_image)"
             :alt="slide.title || 'Slide'"
             class="w-full h-full object-cover"
             width="400"
@@ -172,7 +180,7 @@ async function toggleSlide(slide: CarouselSlide) {
             <input v-model="editingSlide.desktop_image" type="text" class="input-field" placeholder="Or paste image URL" required />
             <div v-if="editingSlide.desktop_image" class="mt-2 rounded-xl overflow-hidden border border-gray-200">
               <NuxtImg
-                :src="editingSlide.desktop_image"
+                :src="normalizeUrl(editingSlide.desktop_image)"
                 :alt="editingSlide.title || 'Desktop slide image'"
                 class="w-full h-48 object-cover"
                 width="400"
@@ -192,7 +200,7 @@ async function toggleSlide(slide: CarouselSlide) {
             <input v-model="editingSlide.mobile_image" type="text" class="input-field" placeholder="Or paste mobile image URL" />
             <div v-if="editingSlide.mobile_image" class="mt-2 rounded-xl overflow-hidden border border-gray-200">
               <NuxtImg
-                :src="editingSlide.mobile_image"
+                :src="normalizeUrl(editingSlide.mobile_image)"
                 :alt="editingSlide.title || 'Mobile slide image'"
                 class="w-full h-48 object-cover"
                 width="400"
