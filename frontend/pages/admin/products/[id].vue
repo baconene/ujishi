@@ -147,7 +147,7 @@ if (!isNew.value) {
 async function save() {
   saving.value = true
   try {
-    const payload = { ...form.value, images: productImages.value, content_blocks: contentBlocks.value }
+    const payload = { ...form.value, images: productImages.value.filter(img => img.url), content_blocks: contentBlocks.value }
     if (isNew.value) {
       await $api('/admin/products', { method: 'POST', headers: authHeaders.value, body: payload })
       toast.value = 'Product created!'

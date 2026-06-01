@@ -93,13 +93,15 @@ class AdminProductController extends Controller
     private function syncImages(Product $product, array $images): void
     {
         $product->images()->delete();
-        foreach ($images as $i => $img) {
+        $order = 0;
+        foreach ($images as $img) {
+            if (empty($img['url'])) continue;
             ProductImage::create([
                 'product_id' => $product->id,
                 'path' => $img['path'] ?? '',
                 'url' => $img['url'],
                 'alt' => $img['alt'] ?? $product->name,
-                'sort_order' => $i,
+                'sort_order' => $order++,
             ]);
         }
     }
