@@ -7,7 +7,12 @@ defineProps<{ section: HomepageSection }>()
 <template>
   <div>
     <template v-if="section.type === 'hero_carousel' && Array.isArray(section.data) && section.data.length">
-      <HeroCarousel :slides="section.data" />
+      <ClientOnly>
+        <HeroCarousel :slides="section.data" />
+        <template #fallback>
+          <div class="bg-matcha-900" style="height: clamp(400px, 60vh, 700px)" />
+        </template>
+      </ClientOnly>
     </template>
 
     <template v-else-if="section.type === 'featured_products' && Array.isArray(section.data)">

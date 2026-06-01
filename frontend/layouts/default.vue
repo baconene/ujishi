@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 
@@ -230,7 +228,9 @@ onMounted(() => {
     </footer>
 
     <!-- Cart Sidebar -->
-    <ShopCartSidebar />
+    <ClientOnly>
+      <ShopCartSidebar />
+    </ClientOnly>
   </div>
 </template>
 

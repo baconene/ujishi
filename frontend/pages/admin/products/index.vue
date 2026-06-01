@@ -20,7 +20,6 @@ const { data, pending, refresh } = await useFetch<PaginatedResponse<Product>>('/
   baseURL: config.public.apiBase,
   headers: authHeaders,
   query,
-  watch: [query],
 })
 
 async function deleteProduct(id: number) {

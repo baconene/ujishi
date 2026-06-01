@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
-import type { CartItem } from '~/types/models'
+import { computed, ref } from 'vue'
+import { useNuxtApp } from 'nuxt/app'
+import type { CartItem } from '../types/models'
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>([])
@@ -14,10 +16,11 @@ export const useCartStore = defineStore('cart', () => {
     }, 0),
   )
 
-  const { $api } = useNuxtApp()
+  type ApiFunction = <T = unknown>(url: string, options?: Record<string, any>) => Promise<T>
+  const { $api } = useNuxtApp() as unknown as { $api: ApiFunction }
 
   function getSessionId(): string {
-    if (process.server) return ''
+    if (typeof window === 'undefined') return ''
     let id = localStorage.getItem('cart_session_id')
     if (!id) {
       id = crypto.randomUUID()

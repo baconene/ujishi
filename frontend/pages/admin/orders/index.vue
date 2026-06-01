@@ -17,7 +17,7 @@ const page = ref(1)
 const query = computed(() => ({ search: search.value || undefined, status: statusFilter.value || undefined, page: page.value }))
 
 const { data, pending, refresh } = await useFetch<PaginatedResponse<Order>>('/admin/orders', {
-  baseURL: config.public.apiBase, headers: authHeaders, query, watch: [query],
+  baseURL: config.public.apiBase, headers: authHeaders, query,
 })
 
 const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']

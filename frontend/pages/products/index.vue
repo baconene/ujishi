@@ -22,10 +22,9 @@ const query = computed(() => ({
   max_price: priceRange.value[1] < 5000 ? priceRange.value[1] : undefined,
 }))
 
-const { data: productsData, pending, refresh } = await useFetch<PaginatedResponse<Product>>('/products', {
+const { data: productsData, pending } = await useFetch<PaginatedResponse<Product>>('/products', {
   baseURL: config.public.apiBase,
   query,
-  watch: [query],
 })
 
 const { data: categories } = await useFetch<Category[]>('/categories', {
@@ -123,7 +122,7 @@ watch([search, selectedCategory, sort], () => applyFilters())
               :current-page="productsData.current_page"
               :last-page="productsData.last_page"
               :total="productsData.total"
-              @change="page = $event; refresh()"
+              @change="page = $event; router.replace({ query: { ...route.query, page: $event } })"
             />
           </template>
 
